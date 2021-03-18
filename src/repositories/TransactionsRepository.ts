@@ -14,14 +14,20 @@ class TransactionsRepository extends Repository<Transaction> {
     const transactions = await this.find();
 
     const { income, outcome } = transactions.reduce(
-      (add: Balance, transaction: Transaction) => {
-        if (transaction.type === 'income') {
-          add.income += Number(transaction.value);
-        } else {
-          add.outcome += Number(transaction.value);
-        }
+      (accumulator, transaction) => {
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += Number(transaction.value);
+            break;
 
-        return add;
+          case 'outcome':
+            accumulator.outcome += Number(transaction.value);
+            break;
+
+          default:
+            break;
+        }
+        return accumulator;
       },
       {
         income: 0,

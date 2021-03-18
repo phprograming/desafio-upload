@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import Multer from 'multer';
+import multer from 'multer';
 
 import { getCustomRepository } from 'typeorm';
 
@@ -10,7 +10,7 @@ import ImportTransactionsService from '../services/ImportTransactionsService';
 
 import uploadConfig from '../config/upload';
 
-const upload = Multer(uploadConfig);
+const upload = multer(uploadConfig);
 
 const transactionsRouter = Router();
 
@@ -52,9 +52,9 @@ transactionsRouter.post(
   '/import',
   upload.single('file'),
   async (request, response) => {
-    const importTransaction = new ImportTransactionsService();
+    const importTransactions = new ImportTransactionsService();
 
-    const transactions = await importTransaction.execute(request.file.path);
+    const transactions = await importTransactions.execute(request.file.path);
 
     return response.json(transactions);
   },

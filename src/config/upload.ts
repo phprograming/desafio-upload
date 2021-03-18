@@ -1,8 +1,8 @@
-import path from 'path';
+import patch from 'path';
 import crypto from 'crypto';
 import multer from 'multer';
 
-const tmpFolder = path.resolve(__dirname, '..', '..', 'tmp');
+const tmpFolder = patch.resolve(__dirname, '..', '..', 'tmp');
 
 export default {
   directory: tmpFolder,

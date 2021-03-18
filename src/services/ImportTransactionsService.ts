@@ -5,9 +5,10 @@ import fs from 'fs';
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
 
+import TransactionRepository from '../repositories/TransactionsRepository';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 
-interface CSV {
+interface CSVTransaction {
   title: string;
   type: 'income' | 'outcome';
   value: number;
@@ -16,18 +17,18 @@ interface CSV {
 
 class ImportTransactionsService {
   async execute(filePath: string): Promise<Transaction[]> {
-    const transactionRepository = getCustomRepository(TransactionsRepository);
+    const transactionRepository = getCustomRepository(TransactionRepository);
     const categoriesRepository = getRepository(Category);
 
-    const readStream = fs.createReadStream(filePath);
+    const contactsReadStream = fs.createReadStream(filePath);
 
-    const parses = csvParse({
+    const parsers = csvParse({
       from_line: 2,
     });
 
-    const parseCSV = readStream.pipe(parses);
+    const parseCSV = contactsReadStream.pipe(parsers);
 
-    const transactions: CSV[] = [];
+    const transactions: CSVTransaction[] = [];
     const categories: string[] = [];
 
     parseCSV.on('data', async line => {
@@ -35,7 +36,7 @@ class ImportTransactionsService {
         cell.trim(),
       );
 
-      if (!title || !type || !value || !category) return;
+      if (!title || !type || !value) return;
 
       categories.push(category);
 
@@ -54,12 +55,12 @@ class ImportTransactionsService {
       (category: Category) => category.title,
     );
 
-    const addCategory = categories
+    const addCategoryTitles = categories
       .filter(category => !existentCategoriesTitles.includes(category))
       .filter((value, index, self) => self.indexOf(value) === index);
 
     const newCategories = categoriesRepository.create(
-      addCategory.map(title => ({
+      addCategoryTitles.map(title => ({
         title,
       })),
     );
@@ -68,7 +69,7 @@ class ImportTransactionsService {
 
     const finalCategories = [...newCategories, ...existentCategories];
 
-    const createdTransactions = transactionRepository.create(
+    const createTransactions = transactionRepository.create(
       transactions.map(transaction => ({
         title: transaction.title,
         type: transaction.type,
@@ -79,11 +80,11 @@ class ImportTransactionsService {
       })),
     );
 
-    await transactionRepository.save(createdTransactions);
+    await transactionRepository.save(createTransactions);
 
     await fs.promises.unlink(filePath);
 
-    return createdTransactions;
+    return createTransactions;
   }
 }
 
